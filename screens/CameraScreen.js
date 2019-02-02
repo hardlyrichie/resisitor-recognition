@@ -26,7 +26,7 @@ export default class CameraScreen extends React.Component {
               style={{
                 flex: 1,
                 backgroundColor: 'transparent',
-                flexDirection: 'row',
+                alignItems: 'center',
                 justifyContent: 'flex-end',
               }}>
               <TouchableHighlight onPress={() => Alert.alert('Pressed')} underlayColor="white" style={styles.button}>
@@ -50,10 +50,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   button: {
-    flex: 0.1,
-    alignSelf: 'flex-end',
+    width: 100,
+    height: 50,
     alignItems: 'center',
-    backgroundColor: 'blue',
-    transform: [{ rotate: '90deg'}]
+    backgroundColor: 'white',
   }
 });

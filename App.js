@@ -37,6 +37,7 @@ const RootStack = createStackNavigator(
   {
     mode: 'modal',
     headerMode: 'none',
+    initialRouteName: 'Camera',
   }
 );
 
