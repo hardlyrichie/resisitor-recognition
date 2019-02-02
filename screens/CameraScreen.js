@@ -1,15 +1,25 @@
 import React from 'react';
-import { StyleSheet, Text, View, TouchableHighlight, Alert } from 'react-native';
+import { StyleSheet, Text, View, TouchableHighlight, Alert, Image } from 'react-native';
 import { Camera, Permissions } from 'expo';
 
 export default class CameraScreen extends React.Component {
   state = {
     hasCameraPermission: null,
+    image: null,
   };
 
   async componentDidMount() {
     const { status } = await Permissions.askAsync(Permissions.CAMERA);
     this.setState({ hasCameraPermission: status === 'granted' });
+  }
+
+  async getResistorValue() {
+    if (this.camera) {
+      let photo = await this.camera.takePictureAsync();
+      this.setState({
+        image: photo.uri
+      });
+    }
   }
 
   render() {
@@ -21,7 +31,7 @@ export default class CameraScreen extends React.Component {
     } else {
       return (
         <View style={{ flex: 1 }}>
-          <Camera style={{ flex: 1 }} zoom={1} focusDepth={1}>
+          <Camera style={{ flex: 1 }} zoom={1} focusDepth={1} ref={ref => { this.camera = ref; }}>
             <View
               style={{
                 flex: 1,
@@ -29,7 +39,12 @@ export default class CameraScreen extends React.Component {
                 alignItems: 'center',
                 justifyContent: 'flex-end',
               }}>
-              <TouchableHighlight onPress={() => Alert.alert('Pressed')} underlayColor="white" style={styles.button}>
+              { this.state.image ? <Image style={{width: 193, height: 110}} source={{uri: this.state.image}}/> : null }
+              <TouchableHighlight 
+                onPress={this.getResistorValue.bind(this)} 
+                underlayColor="white" 
+                style={styles.button}
+              >
                 <View>
                   <Text style={styles.buttonText}>Capture</Text>
                 </View>
