@@ -40,8 +40,31 @@ export default class CameraScreen extends React.Component {
         }
       );
 
-      // Process images
+      // Send image to server
       console.log(croppedImage.uri);
+
+      const filename = croppedImage.uri.split('/').pop();
+      const match = /\.(\w+)$/.exec(filename);
+      const type = match ? `image/${match[1]}` : `image`;
+
+      const formData = new FormData();
+      formData.append('photo', { uri: croppedImage.uri, name: filename, type});
+
+      try {
+        const response = await fetch('https://resistor-sorter.appspot.com/resistor', {
+          method: 'POST',
+          body: formData,
+          header: {
+            'content-type': 'multipart/form-data',
+          },
+        });
+        // const value = await response.json();
+        if (response.status == 200) {
+          console.log(response._bodyText);
+        }
+      } catch(err) {
+        console.log('Error with getting value from server: ' + err);
+      }
       
       this.setState({
         image: croppedImage.uri
