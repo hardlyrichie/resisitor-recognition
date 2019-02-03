@@ -6,6 +6,7 @@ export default class CameraScreen extends React.Component {
   state = {
     hasCameraPermission: null,
     image: null,
+    value: null
   };
 
   async componentDidMount() {
@@ -19,7 +20,8 @@ export default class CameraScreen extends React.Component {
       console.log(`[PICTURE] Width: ${photo.width} Height: ${photo.height}`); // width: 3456, height: 4608
 
       const cropDim = 1500
-
+      
+      // Crop image to zoom in for preview
       const croppedImage = await ImageManipulator.manipulateAsync(photo.uri, 
         [{
           resize: {
@@ -40,15 +42,17 @@ export default class CameraScreen extends React.Component {
         }
       );
 
-      // Send image to server
-      console.log(croppedImage.uri);
+      this.setState({
+        image: croppedImage.uri
+      });
 
-      const filename = croppedImage.uri.split('/').pop();
+      // Send image to server
+      const filename = photo.uri.split('/').pop();
       const match = /\.(\w+)$/.exec(filename);
       const type = match ? `image/${match[1]}` : `image`;
 
       const formData = new FormData();
-      formData.append('photo', { uri: croppedImage.uri, name: filename, type});
+      formData.append('photo', { uri: photo.uri, name: filename, type});
 
       try {
         const response = await fetch('https://resistor-sorter.appspot.com/resistor', {
@@ -61,14 +65,19 @@ export default class CameraScreen extends React.Component {
         // const value = await response.json();
         if (response.status == 200) {
           console.log(response._bodyText);
+          this.setState({
+            value: response._bodyText
+          });
+        } else {
+          console.log('Post request failed');
+          console.log(response);
+          this.setState({
+            value: "Error"
+          });
         }
       } catch(err) {
-        console.log('Error with getting value from server: ' + err);
+        console.log('Error reaching the server: ' + err);
       }
-      
-      this.setState({
-        image: croppedImage.uri
-      });
     }
   }
 
@@ -113,40 +122,52 @@ export default class CameraScreen extends React.Component {
       // TODO: Display line up resister here text
       return (
         <View style={{ flex: 1 }}>
-          <Camera 
-            style={{ width: width, height: height, }}
-            zoom={1}
-            focusDepth={1}
-            ref={ref => { this.camera = ref; }}
-            onCameraReady={this.getRatio.bind(this)}
-            ratio={ratio}
-          >
-            <View style={[
-              styles.aimLine, 
-              {
-                width: 100,
-                marginLeft: width / 2 - 100 / 2
-              }
-            ]}></View>
+          <View style={{ flex: 1, backgroundColor: 'black', color: 'white', alignItems: 'center', justifyContent: 'center'}}>
+            <Text style={{color: 'white', fontSize: 30}}>Resistor Sorter</Text>
+          </View>
+          <View style={{flex: 5}}>
+            <Camera 
+              style={{ width: width, height: height, }}
+              zoom={1}
+              focusDepth={1}
+              ref={ref => { this.camera = ref; }}
+              onCameraReady={this.getRatio.bind(this)}
+              ratio={ratio}
+            >
+              <View style={{
+                flex: 1,
+                backgroundColor: 'transparent',
+                alignItems: 'center',
+                justifyContent: 'flex-end',
+              }}>
+                { image ? <View style={{position: 'absolute', top: 0, right: 0}}>
+                    <Image style={{width: 100, height: 100}} source={{uri: image}}/>
+                    <Text style={{backgroundColor: 'white', fontSize: 20}}>
+                      {this.state.value}
+                    </Text>
+                  </View> : null }
+              </View>
+          
+              <View style={[
+                styles.aimLine, 
+                {
+                  width: 100,
+                  marginLeft: width / 2 - 100 / 2
+                }
+              ]}></View>
 
-            <View style={{
-              flex: 1,
-              backgroundColor: 'transparent',
-              alignItems: 'center',
-              justifyContent: 'flex-end',
-            }}>
-              { image ? <Image style={{ width: 200, height: 200}} source={{uri: image}}/> : null }
-              <TouchableHighlight 
-                onPress={this.getResistorValue.bind(this)} 
-                underlayColor="white" 
-                style={styles.button}
-              >
-                <View>
-                  <Text>Capture</Text>
-                </View>
-              </TouchableHighlight>
-            </View>
-          </Camera>
+              
+            </Camera>
+          </View>
+          <View style={{flex: 2, backgroundColor: 'black', alignItems: "center", justifyContent: "center"}}>
+            <TouchableHighlight 
+              onPress={this.getResistorValue.bind(this)} 
+              underlayColor="white" 
+              style={styles.button}
+            >
+              <View style={{backgroundColor: 'red', width: 50, height: 50, borderRadius: 25, marginTop: 25,}}></View>
+            </TouchableHighlight>
+          </View>
         </View>
       );
     }
@@ -162,13 +183,14 @@ const styles = StyleSheet.create({
   },
   button: {
     width: 100,
-    height: 50,
+    height: 100,
     alignItems: 'center',
     backgroundColor: 'white',
+    borderRadius: 50
   },
   aimLine: {
     flex: 1,
-    borderBottomWidth: 3,
-    borderBottomColor: 'red',
+    borderTopWidth: 3,
+    borderTopColor: 'red',
   }
 });
