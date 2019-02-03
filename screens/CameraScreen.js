@@ -1,6 +1,6 @@
 import React from 'react';
-import { StyleSheet, Text, View, TouchableHighlight, Alert, Image, Platform, Dimensions } from 'react-native';
-import { Camera, Permissions } from 'expo';
+import { StyleSheet, Text, View, TouchableHighlight, Image, Platform, Dimensions } from 'react-native';
+import { Camera, Permissions, ImageManipulator, FileSystem } from 'expo';
 
 export default class CameraScreen extends React.Component {
   state = {
@@ -15,14 +15,37 @@ export default class CameraScreen extends React.Component {
 
   async getResistorValue() {
     if (this.camera) {
-      let photo = await this.camera.takePictureAsync();
+      let photo = await this.camera.takePictureAsync({base64: true});
       console.log(`[PICTURE] Width: ${photo.width} Height: ${photo.height}`); // width: 3456, height: 4608
-      this.setState({
-        image: photo.uri
-      });
+
+      const cropDim = 1500
+
+      const croppedImage = await ImageManipulator.manipulateAsync(photo.uri, 
+        [{
+          resize: {
+            width: photo.width,
+            height: photo.height
+          }
+        },{
+          crop: {
+            originX: photo.width / 2 - (cropDim / 2), 
+            originY: photo.height / 2 - (cropDim / 2), 
+            width: cropDim, 
+            height: cropDim 
+          },
+        }],
+        {
+          compress: 1,
+          format: 'jpeg'
+        }
+      );
 
       // Process images
-
+      console.log(croppedImage.uri);
+      
+      this.setState({
+        image: croppedImage.uri
+      });
     }
   }
 
